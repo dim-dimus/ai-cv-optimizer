@@ -107,6 +107,82 @@ class PromptTemplateSeeder extends Seeder
                 'is_active' => true,
                 'version' => 1,
             ],
+            [
+                'slug' => 'bullet_rewrite',
+                'name' => 'Rewrite weak resume bullets',
+                'description' => 'Finds weak resume bullet points and rewrites them for the job.',
+                'content' => <<<'PROMPT'
+                You improve weak resume bullet points so they target a specific job.
+
+                A weak bullet is vague, passive, or missing a concrete result or metric.
+                Find up to 8 of the weakest bullets in the resume and rewrite each to be
+                specific, active, and quantified where the resume supports it. Do not invent
+                facts. Prefer bullets relevant to the job description.
+
+                Return ONLY a JSON object of the form:
+                {"bullets": [{"original": "...", "suggested": "...", "rationale": "..."}]}
+
+                Examples of strong rewrites:
+                - original: "Worked on the backend"
+                  suggested: "Built and scaled a NestJS microservice handling 2M requests/day"
+                  rationale: "Adds scope, technology, and a quantified result"
+                - original: "Responsible for testing"
+                  suggested: "Introduced automated tests that cut regression bugs by 40%"
+                  rationale: "Turns a duty into a measurable outcome"
+
+                No prose, no markdown — JSON only.
+
+                Resume text:
+                """
+                {{resume_text}}
+                """
+
+                Job description:
+                """
+                {{job_description}}
+                """
+                PROMPT,
+                'model' => 'claude-sonnet-4-6',
+                'max_tokens' => 2048,
+                'temperature' => 0.4,
+                'is_active' => true,
+                'version' => 1,
+            ],
+            [
+                'slug' => 'cover_letter',
+                'name' => 'Generate cover letter',
+                'description' => 'Writes a tailored cover letter from the resume and job description.',
+                'content' => <<<'PROMPT'
+                Write a cover letter for this candidate and job.
+
+                Requirements:
+                - Tone: {{tone}}
+                - Length: {{length}}
+                - Language: {{language}}
+                - Ground every claim in the resume; do not invent experience.
+                - Emphasize the matched strengths and address the role's needs.
+                - Return ONLY the cover letter text — no preamble, no markdown, no placeholders
+                  like "[Your Name]" unless the resume lacks the information.
+
+                Matched strengths:
+                {{matched}}
+
+                Resume:
+                """
+                {{resume_text}}
+                """
+
+                Job description:
+                """
+                {{job_description}}
+                """
+                PROMPT,
+                'model' => 'claude-sonnet-4-6',
+                'max_tokens' => 1536,
+                'temperature' => 0.6,
+                'is_active' => true,
+                'version' => 1,
+            ],
         ];
 
         foreach ($templates as $template) {

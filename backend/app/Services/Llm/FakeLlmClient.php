@@ -29,6 +29,8 @@ final class FakeLlmClient implements LlmClient
         $text = match ($request->operation) {
             'extract_requirements' => $this->fakeRequirements($request->prompt),
             'scoring' => $this->fakeScoring($request->prompt),
+            'bullet_rewrite' => $this->fakeBullets($request->prompt),
+            'cover_letter' => $this->fakeCoverLetter(),
             default => $this->fakeSkills($request->prompt),
         };
 
@@ -73,6 +75,28 @@ final class FakeLlmClient implements LlmClient
             ],
             'explanation' => 'Generated offline by the development stand-in; not a real assessment.',
         ], JSON_THROW_ON_ERROR);
+    }
+
+    private function fakeBullets(string $prompt): string
+    {
+        $phrases = array_slice($this->phrases($prompt), 0, 3);
+        $bullets = [];
+        foreach ($phrases as $phrase) {
+            $bullets[] = [
+                'original' => "Worked with {$phrase}",
+                'suggested' => "Delivered measurable results using {$phrase}, improving a key metric by 30%",
+                'rationale' => 'Offline stand-in: adds scope and a quantified result.',
+            ];
+        }
+
+        return json_encode(['bullets' => $bullets], JSON_THROW_ON_ERROR);
+    }
+
+    private function fakeCoverLetter(): string
+    {
+        return "Dear Hiring Manager,\n\nThis cover letter was generated offline by the development "
+            .'stand-in and is not a real assessment. With the relevant experience on my resume, I am '
+            ."confident I would contribute to your team.\n\nSincerely,\nThe Candidate";
     }
 
     /**

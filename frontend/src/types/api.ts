@@ -79,3 +79,30 @@ export interface Analysis {
   matched?: MatchedRequirement[];
   gaps?: RequirementGap[];
 }
+
+export type BulletStatus = "pending" | "accepted" | "rejected" | "edited";
+
+export interface BulletSuggestion {
+  id: number;
+  original_text: string;
+  suggested_text: string;
+  rationale: string | null;
+  status: BulletStatus;
+  edited_text: string | null;
+  position: number;
+}
+
+export type CoverLetterStatus = "queued" | "processing" | "completed" | "failed";
+
+export type CoverLetterTone = "professional" | "friendly" | "enthusiastic" | "formal";
+export type CoverLetterLength = "short" | "medium" | "long";
+
+export interface CoverLetter {
+  id: number | null;
+  status: CoverLetterStatus;
+  tone: string | null;
+  length: string | null;
+  language: string | null;
+  content: string | null;
+  error_message: string | null;
+}

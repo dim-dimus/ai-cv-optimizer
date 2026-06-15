@@ -102,7 +102,11 @@ user's analysis returns `404`.
 | GET    | `/api/analyses/{id}/bullets`                 | —                            | list with statuses             |
 | PATCH  | `/api/bullets/{bulletId}`                    | `{ status, edited_text? }`   | accept / reject / edit         |
 
-Bullet item:
+`POST` returns `202` `{ "message": … }` and replaces any prior suggestions; the client
+polls `GET` (which returns `{ "data": [ … ] }`) until items appear. `PATCH` requires
+`edited_text` when `status` is `edited`. A bullet owned by another user returns `404`.
+
+Bullet item (inside the `data` envelope):
 ```json
 { "id": 7, "original_text": "Worked on backend", "suggested_text": "Built and scaled a NestJS microservice handling 2M req/day",
   "rationale": "Adds scope and a metric", "status": "pending", "edited_text": null, "position": 0 }
@@ -117,7 +121,12 @@ Bullet item:
 | PATCH  | `/api/analyses/{id}/cover-letter`   | `{ content }`                     | save manual edits           |
 | GET    | `/api/analyses/{id}/cover-letter/export?format=pdf|docx` | —          | returns the file            |
 
-## Admin (role: admin)
+`POST` accepts `tone` ∈ {professional, friendly, enthusiastic, formal}, `length` ∈
+{short, medium, long}, `language` (default `en`); it returns `202` and overwrites any
+existing letter (one per analysis, no history). `GET`/`PATCH`/`POST` return the resource
+in a `data` envelope with `status` ∈ {queued, processing, completed, failed} — poll until
+terminal. `export` streams a `pdf` or `docx` attachment once the letter is `completed`
+(`409` otherwise).
 
 | Method | Path                                 | Body                                  | Notes                       |
 |--------|--------------------------------------|---------------------------------------|-----------------------------|

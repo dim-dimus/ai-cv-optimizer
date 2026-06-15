@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\BulletController;
+use App\Http\Controllers\CoverLetterController;
 use App\Http\Controllers\ResumeController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +28,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('analyses', [AnalysisController::class, 'store']);
     Route::get('analyses/latest', [AnalysisController::class, 'latest']);
     Route::get('analyses/{analysis}', [AnalysisController::class, 'show'])->whereNumber('analysis');
+
+    Route::post('analyses/{analysis}/bullets', [BulletController::class, 'store'])->whereNumber('analysis');
+    Route::get('analyses/{analysis}/bullets', [BulletController::class, 'index'])->whereNumber('analysis');
+    Route::patch('bullets/{bullet}', [BulletController::class, 'update'])->whereNumber('bullet');
+
+    Route::post('analyses/{analysis}/cover-letter', [CoverLetterController::class, 'store'])->whereNumber('analysis');
+    Route::get('analyses/{analysis}/cover-letter', [CoverLetterController::class, 'show'])->whereNumber('analysis');
+    Route::patch('analyses/{analysis}/cover-letter', [CoverLetterController::class, 'update'])->whereNumber('analysis');
+    Route::get('analyses/{analysis}/cover-letter/export', [CoverLetterController::class, 'export'])->whereNumber('analysis');
 });
 
 Route::get('health', fn () => response()->json(['status' => 'ok']));

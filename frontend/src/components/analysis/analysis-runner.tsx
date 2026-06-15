@@ -6,6 +6,8 @@ import { createAnalysis, getAnalysis, getLatestAnalysis } from "@/lib/analysis-a
 import { useAuth } from "@/lib/auth-context";
 import type { Analysis } from "@/types/api";
 import { AnalysisResult } from "@/components/analysis/analysis-result";
+import { BulletReview } from "@/components/analysis/bullet-review";
+import { CoverLetterPanel } from "@/components/analysis/cover-letter-panel";
 
 const MIN_JD_LENGTH = 30;
 
@@ -117,6 +119,19 @@ export function AnalysisRunner() {
       </div>
 
       {analysis ? <AnalysisResult analysis={analysis} /> : null}
+
+      {analysis?.status === "completed" ? (
+        <>
+          <section className="mt-2">
+            <h3 className="mb-3 text-base font-medium text-gray-900">Bullet improvements</h3>
+            <BulletReview analysisId={analysis.id} />
+          </section>
+          <section className="mt-2">
+            <h3 className="mb-3 text-base font-medium text-gray-900">Cover letter</h3>
+            <CoverLetterPanel analysisId={analysis.id} />
+          </section>
+        </>
+      ) : null}
     </div>
   );
 }
