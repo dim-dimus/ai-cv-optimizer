@@ -1,0 +1,112 @@
+# API
+
+REST/JSON under `/api`. Auth via Sanctum bearer token in `Authorization: Bearer <token>`.
+All timestamps ISO 8601 UTC. Heavy operations return a resource with a `status` the
+client polls.
+
+## Conventions
+
+- Success: `2xx` with the resource as JSON.
+- Validation error: `422` with `{ "message", "errors": { field: [..] } }`.
+- Auth error: `401`; forbidden (wrong owner / not admin): `403`; not found: `404`.
+- Other failures: `4xx/5xx` with `{ "message" }` (human-readable, no stack traces).
+- A resource owned by another user returns `403`/`404`, never its data.
+
+## Auth
+
+| Method | Path                 | Body                          | Notes                         |
+|--------|----------------------|-------------------------------|-------------------------------|
+| POST   | `/api/auth/register` | `{ name, email, password }`   | returns user + token          |
+| POST   | `/api/auth/login`    | `{ email, password }`         | returns user + token          |
+| POST   | `/api/auth/logout`   | —                             | revokes current token         |
+| GET    | `/api/auth/me`       | —                             | current user                  |
+
+## Resume (one per user)
+
+| Method | Path                 | Body / form                   | Notes                                   |
+|--------|----------------------|-------------------------------|-----------------------------------------|
+| GET    | `/api/resume`        | —                             | current resume or `404` if none         |
+| POST   | `/api/resume`        | multipart `file` (pdf/docx)   | upload + parse; creates or replaces     |
+| PATCH  | `/api/resume`        | `{ parsed_text }`             | save edited text; resets skill cache    |
+| DELETE | `/api/resume`        | —                             | remove resume + file                    |
+
+`POST /api/resume` response:
+```json
+{ "id": 1, "original_filename": "cv.pdf", "parsed_text": "…extracted…", "language": "en" }
+```
+The client shows `parsed_text` in an editable field and saves edits via `PATCH`.
+
+## Analyses
+
+| Method | Path                          | Body                  | Notes                                  |
+|--------|-------------------------------|-----------------------|----------------------------------------|
+| POST   | `/api/analyses`               | `{ job_description }` | uses stored resume; dispatches job     |
+| GET    | `/api/analyses/{id}`          | —                     | full result; poll until terminal status|
+| GET    | `/api/analyses/latest`        | —                     | most recent analysis (MVP home view)   |
+
+`POST /api/analyses` → `201`:
+```json
+{ "id": 42, "status": "queued" }
+```
+
+`GET /api/analyses/{id}` when completed:
+```json
+{
+  "id": 42,
+  "status": "completed",
+  "overall_score": 78,
+  "score_breakdown": {
+    "hard_skills": 80, "soft_skills": 70, "experience": 85,
+    "education": 60, "keywords": 75
+  },
+  "explanation": "Strong backend match; missing explicit CI/CD and Kubernetes.",
+  "matched": [
+    { "requirement": "AWS Lambda", "matched_skill": "serverless backends on AWS", "similarity": 0.86 }
+  ],
+  "gaps": [
+    { "requirement": "Kubernetes", "category": "hard_skill" }
+  ]
+}
+```
+While running: `{ "id": 42, "status": "processing" }`. On failure:
+`{ "id": 42, "status": "failed", "error_message": "…" }`.
+
+## Bullet suggestions
+
+| Method | Path                                         | Body                         | Notes                          |
+|--------|----------------------------------------------|------------------------------|--------------------------------|
+| POST   | `/api/analyses/{id}/bullets`                 | —                            | dispatch rewrite job           |
+| GET    | `/api/analyses/{id}/bullets`                 | —                            | list with statuses             |
+| PATCH  | `/api/bullets/{bulletId}`                    | `{ status, edited_text? }`   | accept / reject / edit         |
+
+Bullet item:
+```json
+{ "id": 7, "original_text": "Worked on backend", "suggested_text": "Built and scaled a NestJS microservice handling 2M req/day",
+  "rationale": "Adds scope and a metric", "status": "pending", "edited_text": null, "position": 0 }
+```
+
+## Cover letter
+
+| Method | Path                                | Body                              | Notes                       |
+|--------|-------------------------------------|-----------------------------------|-----------------------------|
+| POST   | `/api/analyses/{id}/cover-letter`   | `{ tone, length, language }`      | dispatch generate/regen job |
+| GET    | `/api/analyses/{id}/cover-letter`   | —                                 | status + content            |
+| PATCH  | `/api/analyses/{id}/cover-letter`   | `{ content }`                     | save manual edits           |
+| GET    | `/api/analyses/{id}/cover-letter/export?format=pdf|docx` | —          | returns the file            |
+
+## Admin (role: admin)
+
+| Method | Path                                 | Body                                  | Notes                       |
+|--------|--------------------------------------|---------------------------------------|-----------------------------|
+| GET    | `/api/admin/prompt-templates`        | —                                     | list                        |
+| GET    | `/api/admin/prompt-templates/{slug}` | —                                     | single                      |
+| PUT    | `/api/admin/prompt-templates/{slug}` | `{ content, model, max_tokens, temperature, is_active }` | edit, no deploy |
+| GET    | `/api/admin/usage`                   | `?from&to`                            | token/cost aggregates       |
+| GET    | `/api/admin/llm-logs`                | `?operation&status&page`              | request/response logs       |
+| GET    | `/api/admin/users`                   | `?page`                               | user list + activity        |
+
+## Polling
+
+The client polls `GET` on the relevant resource (analysis / bullets / cover letter)
+every ~2 s while `status ∈ {queued, processing}`, stopping at `completed` or `failed`.
+WebSocket push (Laravel Echo) is an optional enhancement; polling is the MVP baseline.
