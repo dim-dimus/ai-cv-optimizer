@@ -39,29 +39,75 @@ ai-cv-optimizer/
 
 - Node.js 20+ and pnpm (or npm)
 - PHP 8.3+ and Composer
-- PostgreSQL 16+ with the `pgvector` extension available
-- An Anthropic API key and a Voyage AI API key
+- Docker (for the local PostgreSQL + `pgvector` container), or your own PostgreSQL 16+
+  with the `pgvector` extension available
+- An Anthropic API key and a Voyage AI API key (only needed once LLM features land)
 
-## Quickstart
+## Running locally
+
+The local database runs in Docker (`docker-compose.yml`) as a `pgvector` image. To avoid
+clashing with any other Postgres on the default port, it is published on host port
+**5433**. The backend `.env.example` is already pointed at it.
+
+### First-time setup
 
 ```bash
-# 1. Backend
+# from the repo root — start PostgreSQL (pgvector) in the background
+docker compose up -d
+
+# Backend
 cd backend
 composer install
-cp .env.example .env
+cp .env.example .env            # already targets the 5433 pgvector container
 php artisan key:generate
-# set DB_*, ANTHROPIC_API_KEY, VOYAGE_API_KEY, AWS_* in .env
-php artisan migrate
-php artisan queue:work          # run in a separate terminal
+php artisan migrate              # builds the full schema (enables the vector extension)
 
-# 2. Frontend
+# create the separate database the test suite uses
+docker exec ai-cv-optimizer-postgres \
+  psql -U app -d ai_cv_optimizer -c "CREATE DATABASE ai_cv_optimizer_test;"
+docker exec ai-cv-optimizer-postgres \
+  psql -U app -d ai_cv_optimizer_test -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+# Frontend
 cd ../frontend
 pnpm install
-cp .env.example .env.local      # set NEXT_PUBLIC_API_URL
-pnpm dev
+cp .env.example .env.local       # sets NEXT_PUBLIC_API_URL=http://localhost:8000/api
 ```
 
-Backend defaults to `http://localhost:8000`, frontend to `http://localhost:3000`.
+### Start everything (day to day)
+
+Run each in its own terminal:
+
+```bash
+docker compose up -d                       # 1. database (skip if already running)
+cd backend && php artisan serve            # 2. API     → http://localhost:8000
+cd backend && php artisan queue:work       # 3. queue worker (required for any analysis)
+cd frontend && pnpm dev                    # 4. UI      → http://localhost:3000
+```
+
+### Stop everything
+
+```bash
+# stop the API, queue worker, and frontend: Ctrl+C in each terminal, or:
+pkill -f "artisan serve"; pkill -f "queue:work"; pkill -f "next dev"
+
+# stop the database container (data is preserved in the pgdata volume)
+docker compose down
+
+# to also wipe the database data, remove the volume too:
+docker compose down -v
+```
+
+Backend defaults to `http://localhost:8000`, frontend to `http://localhost:3000`,
+PostgreSQL to `localhost:5433`.
+
+### Useful checks
+
+```bash
+cd backend  && php artisan test            # backend tests (uses ai_cv_optimizer_test)
+cd backend  && ./vendor/bin/pint           # format PHP
+cd frontend && pnpm lint && pnpm typecheck # frontend lint + types
+```
 
 ## Documentation index
 

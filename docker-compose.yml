@@ -1,0 +1,23 @@
+# Local development services for AI CV Optimizer.
+# Postgres ships with pgvector preinstalled. Port 5433 on the host avoids clashing
+# with any other Postgres already bound to 5432.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ai-cv-optimizer-postgres
+    environment:
+      POSTGRES_DB: ai_cv_optimizer
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d ai_cv_optimizer"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
