@@ -47,7 +47,7 @@ ai-cv-optimizer/
 
 The local database runs in Docker (`docker-compose.yml`) as a `pgvector` image. To avoid
 clashing with any other Postgres on the default port, it is published on host port
-**5433**. The backend `.env.example` is already pointed at it.
+**55432**. The backend `.env.example` is already pointed at it.
 
 ### First-time setup
 
@@ -58,7 +58,7 @@ docker compose up -d
 # Backend
 cd backend
 composer install
-cp .env.example .env            # already targets the 5433 pgvector container
+cp .env.example .env            # already targets the 55432 pgvector container
 php artisan key:generate
 php artisan migrate              # builds the full schema (enables the vector extension)
 
@@ -80,7 +80,14 @@ Run each in its own terminal:
 
 ```bash
 docker compose up -d                       # 1. database (skip if already running)
-cd backend && php artisan serve            # 2. API     → http://localhost:8000
+
+# 2. API → http://localhost:8000
+# PHP_INI_SCAN_DIR loads backend/.devphp/uploads.ini, which raises PHP's upload
+# limits so resumes up to 5 MB are accepted. (The CLI default is often 2 MB, which
+# rejects larger uploads before validation runs. `artisan serve` spawns a child
+# `php -S`, so inline `-d` flags do not reach it — an env var does.)
+cd backend && PHP_INI_SCAN_DIR=":$(pwd)/.devphp" php artisan serve
+
 cd backend && php artisan queue:work       # 3. queue worker (required for any analysis)
 cd frontend && pnpm dev                    # 4. UI      → http://localhost:3000
 ```
@@ -99,7 +106,7 @@ docker compose down -v
 ```
 
 Backend defaults to `http://localhost:8000`, frontend to `http://localhost:3000`,
-PostgreSQL to `localhost:5433`.
+PostgreSQL to `localhost:55432`.
 
 ### Useful checks
 

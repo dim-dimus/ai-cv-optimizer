@@ -31,21 +31,27 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, token, headers, ...rest } = options;
 
+  const isFormData = body instanceof FormData;
+
   const finalHeaders = new Headers(headers);
   finalHeaders.set("Accept", "application/json");
-  if (body !== undefined) {
+  // For FormData, let the browser set Content-Type (with the multipart boundary).
+  if (body !== undefined && !isFormData) {
     finalHeaders.set("Content-Type", "application/json");
   }
   if (token) {
     finalHeaders.set("Authorization", `Bearer ${token}`);
   }
 
+  const requestBody =
+    body === undefined ? undefined : isFormData ? body : JSON.stringify(body);
+
   let response: Response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
       ...rest,
       headers: finalHeaders,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: requestBody,
     });
   } catch {
     throw new ApiError("Could not reach the server. Please try again.", 0);

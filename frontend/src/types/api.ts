@@ -37,3 +37,12 @@ export interface LoginPayload {
   email: string;
   password: string;
 }
+
+export interface Resume {
+  id: number;
+  original_filename: string;
+  parsed_text: string | null;
+  language: string;
+  skills_synced_at: string | null;
+  updated_at: string | null;
+}

@@ -30,11 +30,26 @@ client polls.
 | PATCH  | `/api/resume`        | `{ parsed_text }`             | save edited text; resets skill cache    |
 | DELETE | `/api/resume`        | —                             | remove resume + file                    |
 
-`POST /api/resume` response:
+`GET` / `POST` / `PATCH /api/resume` return the resource wrapped in a `data`
+envelope (Laravel API Resource convention):
 ```json
-{ "id": 1, "original_filename": "cv.pdf", "parsed_text": "…extracted…", "language": "en" }
+{
+  "data": {
+    "id": 1,
+    "original_filename": "cv.pdf",
+    "parsed_text": "…extracted…",
+    "language": "en",
+    "skills_synced_at": null,
+    "updated_at": "2026-06-15T10:39:49+00:00"
+  }
+}
 ```
-The client shows `parsed_text` in an editable field and saves edits via `PATCH`.
+`POST` returns `201` on first upload, `200` when replacing an existing resume. The
+client shows `parsed_text` in an editable field and saves edits via `PATCH`. After
+upload or edit, skill extraction + embeddings run on the queue; `skills_synced_at`
+becomes non-null once the sync completes. Invalid uploads (wrong type, > 5 MB) return
+`422`; an unparseable file returns `422` with a readable `message`. `DELETE` returns
+`{ "message": "Resume deleted." }`.
 
 ## Analyses
 

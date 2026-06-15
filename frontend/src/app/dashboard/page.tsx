@@ -1,6 +1,7 @@
 "use client";
 
 import { RequireAuth } from "@/components/require-auth";
+import { ResumeManager } from "@/components/resume/resume-manager";
 import { useAuth } from "@/lib/auth-context";
 
 function DashboardContent() {
@@ -21,8 +22,9 @@ function DashboardContent() {
         </button>
       </header>
 
-      <section className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
-        Your resume and analyses will appear here. Resume upload arrives in the next phase.
+      <section>
+        <h2 className="mb-4 text-lg font-medium text-gray-900">Your resume</h2>
+        <ResumeManager />
       </section>
     </main>
   );

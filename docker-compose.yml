@@ -1,6 +1,6 @@
 # Local development services for AI CV Optimizer.
-# Postgres ships with pgvector preinstalled. Port 5433 on the host avoids clashing
-# with any other Postgres already bound to 5432.
+# Postgres ships with pgvector preinstalled. Published on host port 55432 (bound to
+# loopback) to avoid clashing with any other Postgres or SSH tunnel on common ports.
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: secret
     ports:
-      - "5433:5432"
+      - "127.0.0.1:55432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
