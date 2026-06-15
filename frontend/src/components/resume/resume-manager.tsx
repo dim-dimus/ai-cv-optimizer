@@ -56,6 +56,32 @@ export function ResumeManager() {
     };
   }, [token, applyResume]);
 
+  // While skills are still syncing in the background, poll for status and update
+  // "Analysing… → ready" without a refresh. Only metadata is refreshed here, never
+  // the textarea, so any unsaved edits are preserved.
+  const syncedAt = resume?.skills_synced_at ?? null;
+  const resumeId = resume?.id ?? null;
+  useEffect(() => {
+    if (!token || resumeId === null || syncedAt !== null) return;
+    let cancelled = false;
+
+    const interval = setInterval(() => {
+      void (async () => {
+        try {
+          const latest = await getResume(token);
+          if (!cancelled && latest) setResume(latest);
+        } catch {
+          // Ignore transient polling errors; the next tick retries.
+        }
+      })();
+    }, 2500);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [token, resumeId, syncedAt]);
+
   async function handleUpload(file: File) {
     if (!token) return;
     const validationError = validateFile(file);

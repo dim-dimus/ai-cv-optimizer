@@ -46,3 +46,36 @@ export interface Resume {
   skills_synced_at: string | null;
   updated_at: string | null;
 }
+
+export type AnalysisStatus = "queued" | "processing" | "completed" | "failed";
+
+export interface ScoreBreakdown {
+  hard_skills: number;
+  soft_skills: number;
+  experience: number;
+  education: number;
+  keywords: number;
+}
+
+export interface MatchedRequirement {
+  requirement: string;
+  matched_skill: string | null;
+  similarity: number | null;
+}
+
+export interface RequirementGap {
+  requirement: string;
+  category: string | null;
+}
+
+export interface Analysis {
+  id: number;
+  status: AnalysisStatus;
+  error_message?: string | null;
+  overall_score?: number;
+  score_breakdown?: ScoreBreakdown;
+  explanation?: string;
+  completed_at?: string | null;
+  matched?: MatchedRequirement[];
+  gaps?: RequirementGap[];
+}

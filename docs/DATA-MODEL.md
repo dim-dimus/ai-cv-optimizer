@@ -74,7 +74,7 @@ Enable the extension once: `CREATE EXTENSION IF NOT EXISTS vector;`
 - `user_id` FK nullable, `analysis_id` FK nullable
 - `provider` enum `anthropic` | `voyage`
 - `model`
-- `operation` enum `extract_skills` | `scoring` | `bullet_rewrite` | `cover_letter` | `embedding`
+- `operation` enum `extract_skills` | `extract_requirements` | `scoring` | `bullet_rewrite` | `cover_letter` | `embedding`
 - `prompt_tokens`, `completion_tokens`, `total_tokens`
 - `cost_usd` decimal, `latency_ms` int
 - `status` `success` | `failed`, `error` nullable

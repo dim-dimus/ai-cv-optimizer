@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('analysis_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('provider', ['anthropic', 'voyage']);
             $table->string('model');
-            $table->enum('operation', ['extract_skills', 'scoring', 'bullet_rewrite', 'cover_letter', 'embedding']);
+            $table->enum('operation', ['extract_skills', 'extract_requirements', 'scoring', 'bullet_rewrite', 'cover_letter', 'embedding']);
             $table->integer('prompt_tokens')->default(0);
             $table->integer('completion_tokens')->default(0);
             $table->integer('total_tokens')->default(0);

@@ -8,27 +8,29 @@ use App\Contracts\LlmClient;
 
 /**
  * Offline, deterministic stand-in for the chat provider in local/test
- * environments. For skill extraction it returns a JSON `{ "skills": [...] }`
- * payload derived from the prompt text, so the pipeline runs end to end
- * without calling Anthropic. Replaced by the real provider in Phase 3.
+ * environments. Branches on the request operation to return the JSON shape each
+ * pipeline step expects, so the whole flow runs without calling Anthropic.
+ * Replaced by AnthropicClient when an API key is configured.
  */
 final class FakeLlmClient implements LlmClient
 {
     /**
-     * Common words to drop so the extracted "skills" resemble real ones.
-     *
      * @var array<int, string>
      */
     private const STOPWORDS = [
         'the', 'and', 'for', 'with', 'you', 'your', 'are', 'from', 'this', 'that',
         'return', 'json', 'skills', 'resume', 'text', 'list', 'only', 'each', 'into',
         'extract', 'following', 'experience', 'candidate', 'phrases', 'their',
+        'requirements', 'requirement', 'description', 'job', 'category',
     ];
 
     public function complete(LlmRequest $request): LlmResponse
     {
-        $skills = $this->fakeSkills($request->prompt);
-        $text = json_encode(['skills' => $skills], JSON_THROW_ON_ERROR);
+        $text = match ($request->operation) {
+            'extract_requirements' => $this->fakeRequirements($request->prompt),
+            'scoring' => $this->fakeScoring($request->prompt),
+            default => $this->fakeSkills($request->prompt),
+        };
 
         return new LlmResponse(
             text: $text,
@@ -38,18 +40,49 @@ final class FakeLlmClient implements LlmClient
         );
     }
 
+    private function fakeSkills(string $prompt): string
+    {
+        return json_encode(['skills' => $this->phrases($prompt)], JSON_THROW_ON_ERROR);
+    }
+
+    private function fakeRequirements(string $prompt): string
+    {
+        $categories = ['hard_skill', 'soft_skill', 'experience', 'education', 'keyword'];
+        $requirements = [];
+        foreach ($this->phrases($prompt) as $i => $phrase) {
+            $requirements[] = ['text' => $phrase, 'category' => $categories[$i % count($categories)]];
+        }
+
+        return json_encode(['requirements' => $requirements], JSON_THROW_ON_ERROR);
+    }
+
+    private function fakeScoring(string $prompt): string
+    {
+        // Derive a plausible overall from the matched/gap balance in the prompt.
+        $matched = substr_count($prompt, "\n- ");
+        $score = $matched > 0 ? min(95, 50 + $matched * 5) : 60;
+
+        return json_encode([
+            'overall_score' => $score,
+            'breakdown' => [
+                'hard_skills' => $score,
+                'soft_skills' => max(0, $score - 10),
+                'experience' => min(100, $score + 5),
+                'education' => max(0, $score - 15),
+                'keywords' => $score,
+            ],
+            'explanation' => 'Generated offline by the development stand-in; not a real assessment.',
+        ], JSON_THROW_ON_ERROR);
+    }
+
     /**
+     * Pull plausible phrases from the resume/JD block the template wraps in triple quotes.
+     *
      * @return array<int, string>
      */
-    private function fakeSkills(string $prompt): array
+    private function phrases(string $prompt): array
     {
-        // Prefer the resume body the template wraps in triple quotes, so the
-        // stand-in returns plausible skills rather than words from the instructions.
-        if (preg_match('/"""\s*(.+?)\s*"""/s', $prompt, $block) === 1) {
-            $source = $block[1];
-        } else {
-            $source = $prompt;
-        }
+        $source = preg_match('/"""\s*(.+?)\s*"""/s', $prompt, $block) === 1 ? $block[1] : $prompt;
 
         preg_match_all('/[A-Za-z][A-Za-z0-9+#.\-]{2,}/', $source, $matches);
 

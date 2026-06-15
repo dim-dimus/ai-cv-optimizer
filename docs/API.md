@@ -59,32 +59,40 @@ becomes non-null once the sync completes. Invalid uploads (wrong type, > 5 MB) r
 | GET    | `/api/analyses/{id}`          | —                     | full result; poll until terminal status|
 | GET    | `/api/analyses/latest`        | —                     | most recent analysis (MVP home view)   |
 
+Responses are wrapped in a `data` envelope (API Resource convention). `POST` returns
+`201` with a stored resume required first — without one it returns `422`. `job_description`
+must be 30–20000 characters.
+
 `POST /api/analyses` → `201`:
 ```json
-{ "id": 42, "status": "queued" }
+{ "data": { "id": 42, "status": "queued" } }
 ```
 
 `GET /api/analyses/{id}` when completed:
 ```json
 {
-  "id": 42,
-  "status": "completed",
-  "overall_score": 78,
-  "score_breakdown": {
-    "hard_skills": 80, "soft_skills": 70, "experience": 85,
-    "education": 60, "keywords": 75
-  },
-  "explanation": "Strong backend match; missing explicit CI/CD and Kubernetes.",
-  "matched": [
-    { "requirement": "AWS Lambda", "matched_skill": "serverless backends on AWS", "similarity": 0.86 }
-  ],
-  "gaps": [
-    { "requirement": "Kubernetes", "category": "hard_skill" }
-  ]
+  "data": {
+    "id": 42,
+    "status": "completed",
+    "overall_score": 78,
+    "score_breakdown": {
+      "hard_skills": 80, "soft_skills": 70, "experience": 85,
+      "education": 60, "keywords": 75
+    },
+    "explanation": "Strong backend match; missing explicit CI/CD and Kubernetes.",
+    "completed_at": "2026-06-15T13:18:26+00:00",
+    "matched": [
+      { "requirement": "AWS Lambda", "matched_skill": "serverless backends on AWS", "similarity": 0.86 }
+    ],
+    "gaps": [
+      { "requirement": "Kubernetes", "category": "hard_skill" }
+    ]
+  }
 }
 ```
-While running: `{ "id": 42, "status": "processing" }`. On failure:
-`{ "id": 42, "status": "failed", "error_message": "…" }`.
+While running: `{ "data": { "id": 42, "status": "processing" } }`. On failure:
+`{ "data": { "id": 42, "status": "failed", "error_message": "…" } }`. Reading another
+user's analysis returns `404`.
 
 ## Bullet suggestions
 

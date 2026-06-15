@@ -58,4 +58,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Analysis::class);
     }
+
+    /** @return HasMany<LlmLog, $this> */
+    public function llmLogs(): HasMany
+    {
+        return $this->hasMany(LlmLog::class);
+    }
 }

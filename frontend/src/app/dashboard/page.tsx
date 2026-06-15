@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalysisRunner } from "@/components/analysis/analysis-runner";
 import { RequireAuth } from "@/components/require-auth";
 import { ResumeManager } from "@/components/resume/resume-manager";
 import { useAuth } from "@/lib/auth-context";
@@ -22,9 +23,14 @@ function DashboardContent() {
         </button>
       </header>
 
-      <section>
+      <section className="mb-10">
         <h2 className="mb-4 text-lg font-medium text-gray-900">Your resume</h2>
         <ResumeManager />
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-medium text-gray-900">Match analysis</h2>
+        <AnalysisRunner />
       </section>
     </main>
   );

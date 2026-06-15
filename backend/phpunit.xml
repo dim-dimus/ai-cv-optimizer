@@ -32,6 +32,9 @@
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <!-- Force the offline LLM/embedding stand-ins so tests never hit a real provider. -->
+        <env name="ANTHROPIC_API_KEY" value=""/>
+        <env name="VOYAGE_API_KEY" value=""/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
