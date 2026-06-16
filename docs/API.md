@@ -20,6 +20,11 @@ client polls.
 | POST   | `/api/auth/login`    | `{ email, password }`         | returns user + token          |
 | POST   | `/api/auth/logout`   | —                             | revokes current token         |
 | GET    | `/api/auth/me`       | —                             | current user                  |
+| DELETE | `/api/auth/account`  | —                             | GDPR: delete account + all data |
+
+The endpoints that trigger paid LLM work (`POST /api/analyses`, `…/bullets`,
+`…/cover-letter`) are rate limited to 15/min per user (`429` when exceeded). Admin
+routes (`/api/admin/*`) require the `admin` role (`403` otherwise).
 
 ## Resume (one per user)
 

@@ -135,3 +135,15 @@ English-only analysis, accounts (email + password), one resume per user,
 PDF/DOCX upload, scoring + gaps + bullet rewrites + cover letter, admin panel for
 prompt templates and LLM usage. Multilingual support, analysis history, and
 per-user quotas are explicitly post-MVP — see the requirements docs.
+
+## Admin & privacy
+
+- **Admin panel** (`/admin`) is gated by the `role` column. `migrate:fresh --seed`
+  creates `admin@example.com` (password `password`) for local use. Admins edit prompt
+  templates (effective immediately, no deploy), and view LLM usage, logs, and users.
+- **Account deletion** (GDPR): a user can delete their account and all data — resume
+  file, analyses, bullets, cover letters, and LLM logs — from the dashboard
+  (`DELETE /api/auth/account`).
+- **Sub-processors:** resume and job-description text is sent to **Anthropic** (Claude,
+  generation/reasoning) and **Voyage AI** (embeddings). Both are sub-processors; prefer
+  an EU region in production. `llm_logs` payloads are minimal and admin-only.

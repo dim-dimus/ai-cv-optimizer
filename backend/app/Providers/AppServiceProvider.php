@@ -14,6 +14,9 @@ use App\Services\Llm\LlmContext;
 use App\Services\Llm\LoggingEmbeddingClient;
 use App\Services\Llm\LoggingLlmClient;
 use App\Services\Llm\VoyageClient;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -50,6 +53,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        // Throttle the endpoints that trigger paid LLM work, per user (NFR-S7).
+        RateLimiter::for('llm', fn (Request $request) => Limit::perMinute(15)->by(
+            $request->user()?->id ?? $request->ip(),
+        ));
     }
 }

@@ -21,6 +21,7 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -92,9 +93,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("unauthenticated");
   }, [token]);
 
+  const deleteAccount = useCallback(async () => {
+    if (token) {
+      await authApi.deleteAccount(token);
+    }
+    window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+    setUser(null);
+    setToken(null);
+    setStatus("unauthenticated");
+  }, [token]);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ user, token, status, login, register, logout }),
-    [user, token, status, login, register, logout],
+    () => ({ user, token, status, login, register, logout, deleteAccount }),
+    [user, token, status, login, register, logout, deleteAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

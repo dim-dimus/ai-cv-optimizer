@@ -23,3 +23,7 @@ export async function fetchMe(token: string): Promise<User> {
   const res = await apiFetch<ResourceEnvelope<User>>("/auth/me", { token });
   return res.data;
 }
+
+export function deleteAccount(token: string): Promise<void> {
+  return apiFetch<void>("/auth/account", { method: "DELETE", token });
+}

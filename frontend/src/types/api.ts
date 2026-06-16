@@ -106,3 +106,56 @@ export interface CoverLetter {
   content: string | null;
   error_message: string | null;
 }
+
+// --- Admin ---
+
+export interface PromptTemplate {
+  slug: string;
+  name: string;
+  description: string | null;
+  content: string;
+  model: string;
+  max_tokens: number;
+  temperature: number;
+  is_active: boolean;
+  version: number;
+  updated_at: string | null;
+}
+
+export interface UsageByOperation {
+  operation: string;
+  provider: string;
+  calls: number;
+  tokens: number;
+  cost_usd: number;
+}
+
+export interface UsageSummary {
+  totals: { calls: number; tokens: number; cost_usd: number; failures: number };
+  by_operation: UsageByOperation[];
+}
+
+export interface LlmLogEntry {
+  id: number;
+  user_id: number | null;
+  analysis_id: number | null;
+  provider: string;
+  model: string;
+  operation: string;
+  total_tokens: number;
+  cost_usd: number;
+  latency_ms: number | null;
+  status: string;
+  error: string | null;
+  created_at: string | null;
+}
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  created_at: string | null;
+  analyses_count: number;
+  has_resume: boolean;
+}
